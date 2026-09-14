@@ -91,6 +91,88 @@
             pointer-events: none;
             z-index: 10;
         }
+    
+        /* ===== MOBILE OPTIMIZATION ===== */
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+        }
+
+        #ui {
+            left: 50%;
+            bottom: max(18px, env(safe-area-inset-bottom));
+            width: min(92vw, 620px);
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        #ui h1 {
+            font-size: clamp(20px, 6vw, 32px);
+            letter-spacing: clamp(2px, 1vw, 6px);
+            line-height: 1.2;
+        }
+
+        #ui p {
+            font-size: clamp(9px, 2.7vw, 13px);
+            letter-spacing: clamp(.8px, .5vw, 2px);
+            line-height: 1.45;
+            margin-top: 7px;
+        }
+
+        #loader {
+            min-height: 100dvh;
+            min-height: 100vh;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            touch-action: none;
+        }
+
+        @media (max-width: 600px) {
+            #ui {
+                bottom: max(12px, env(safe-area-inset-bottom));
+                width: 94vw;
+            }
+
+            #ui p:nth-of-type(n+2) {
+                display: none;
+            }
+
+            #ui p:first-of-type {
+                margin-top: 8px;
+            }
+
+            #vignette {
+                background: radial-gradient(
+                    circle at center,
+                    transparent 34%,
+                    rgba(0, 0, 0, 0.72) 100%
+                );
+            }
+        }
+
+        @media (max-width: 600px) and (orientation: landscape) {
+            #ui {
+                left: 18px;
+                bottom: max(12px, env(safe-area-inset-bottom));
+                width: min(70vw, 560px);
+                transform: none;
+                text-align: left;
+            }
+
+            #ui h1 {
+                font-size: clamp(18px, 4vw, 28px);
+            }
+        }
+
     </style>
 </head>
 
@@ -103,15 +185,15 @@
     <div id="vignette"></div>
 
     <div id="ui">
-        <h1>Are You Angry With Me EVA ?</h1>
+        <h1>Meri Peari Eva , Are You Angry With Me ?</h1>
         <p>Under the moonlight, forever</p>
         <p>With you, every moment is magical</p>
         <p>I'm sorry, you silly girl 🥹❤️ It won't happen again; let go of the anger now.</p>
         <p>Okay, I admit it was my fault 😔 Now please forgive me! 🥺🤍</p>
         <p>Please smile a little 🥺 I’m missing your smile. ❤️‍🩹</p>
-        <p>Let’s forget the anger and misunderstandings, okay? 🥹 Let’s talk nicely again.💗</p>
-        <p>Plizzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz</p>
-        <p>Sorrrrrrrrrrrrrrrrrrrrrrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy</p>
+        <p>Let’s forget the anger and misunderstandings, okay? 🥹🤝 Let’s talk nicely again. 💗</p>
+        <p>Plizzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz</p>
+        <p>Sorrrrrrrrrrrrrrrrrrrrrrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy</p>
     </div>
 
     <script type="importmap">
@@ -143,7 +225,9 @@
             const container = document.body;
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            const maxPixelRatio = isMobile ? 1.5 : 2;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.0;
@@ -554,6 +638,9 @@
             controls.minDistance = 50;
             controls.maxDistance = 1200;
             controls.enablePan = false;
+            controls.enableZoom = true;
+            controls.enableRotate = true;
+            controls.screenSpacePanning = false;
             controls.enableDamping = true;
             controls.dampingFactor = 0.04;
             controls.target.set(-150, 90, -500);
@@ -694,10 +781,14 @@
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            camera.aspect = w / h;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
+
+            renderer.setSize(w, h, false);
+            composer.setSize(w, h);
         }
 
         function animate() {
@@ -788,6 +879,12 @@
             }
 
             composer.render();
+        }
+
+        // Mobile-friendly performance tuning
+        if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+            // Keep the scene visually rich while avoiding excessive GPU load.
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         }
 
         init();
